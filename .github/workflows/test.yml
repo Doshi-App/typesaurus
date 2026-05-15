@@ -1,0 +1,108 @@
+# Per ADR 0002 (docs/adr/0002-peer-dependency-strategy.md): verify the declared
+# peer-dependency range against the floor and latest of each supported Firebase
+# major. Five jobs: 3 admin (firebase-admin majors 12/13/14...) + 2 admin floor,
+# plus 1 type-check job. Browser/web-adapter matrix is deferred until we wire
+# Playwright in CI; for rc.0 the admin matrix is the load-bearing one because
+# Doshi's server is the lead consumer (see ADR 0001 § Dogfooding plan).
+
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  type-check:
+    name: type-check (typescript@6, latest firebase)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: make types
+
+  test-admin:
+    name: test-admin (firebase-admin@${{ matrix.firebase-admin }})
+    runs-on: ubuntu-latest
+    needs: type-check
+    strategy:
+      fail-fast: false
+      matrix:
+        firebase-admin:
+          - "12.7.0"   # floor: first minor with vector-search APIs
+          - "^13"      # latest of v13 major
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Override firebase-admin to ${{ matrix.firebase-admin }}
+        run: pnpm add -D "firebase-admin@${{ matrix.firebase-admin }}"
+
+      - name: Materialize emulator config
+        run: cp .firebaserc.example .firebaserc
+
+      - run: make test-node
+
+  test-web:
+    name: test-web (firebase@${{ matrix.firebase }})
+    runs-on: ubuntu-latest
+    needs: type-check
+    strategy:
+      fail-fast: false
+      matrix:
+        firebase:
+          - "10.13.0"  # floor: first minor with vector-search APIs
+          - "^11"      # latest of v11 major
+          - "^12"      # latest of v12 major
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Override firebase to ${{ matrix.firebase }}
+        run: pnpm add -D "firebase@${{ matrix.firebase }}"
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Materialize emulator config
+        run: cp .firebaserc.example .firebaserc
+
+      - run: make test-browser

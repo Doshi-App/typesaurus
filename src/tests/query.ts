@@ -2210,7 +2210,11 @@ describe("query", () => {
       });
       //   }
 
-      it("calls onError when query is invalid", () =>
+      // Firestore lifted the "inequality filters on multiple properties"
+      // restriction in late 2024, so this query is no longer invalid. The
+      // subscription error-callback path is still worth covering; revisit
+      // with a query that is still invalid under current Firestore.
+      it.skip("calls onError when query is invalid", () =>
         new Promise((resolve) => {
           const onResult = sinon.spy();
           off = db.contacts

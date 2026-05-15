@@ -39,13 +39,15 @@ describe("average", () => {
   const productComment2 = db.averageProducts.sub.averageComments.id("2");
 
   beforeAll(async () => {
-    await Promise.all([
-      db.averagePosts.set(postId1, {
-        title: "First post",
-        text: "Hello world",
-        rating: 8,
-      }),
+    // postId1 is written twice deliberately (the second write must win).
+    // Sequence the conflicting writes; parallelise the rest.
+    await db.averagePosts.set(postId1, {
+      title: "First post",
+      text: "Hello world",
+      rating: 8,
+    });
 
+    await Promise.all([
       db.averagePosts(postId1).averageComments.set(postComment1, {
         text: "Great post",
         rating: 10,
@@ -65,12 +67,6 @@ describe("average", () => {
       db.averagePosts(postId3).averageComments.set(postComment3, {
         text: "Bad post",
         rating: 2,
-      }),
-
-      db.averagePosts.set(postId1, {
-        title: "First post",
-        text: "Just kidding",
-        rating: 5,
       }),
 
       db.averageProducts.set(productId1, {
@@ -93,6 +89,12 @@ describe("average", () => {
         rating: 5,
       }),
     ]);
+
+    await db.averagePosts.set(postId1, {
+      title: "First post",
+      text: "Just kidding",
+      rating: 5,
+    });
   });
 
   it("averages document fields in a collection", async () => {
