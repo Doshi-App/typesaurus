@@ -93,6 +93,7 @@ export class Collection {
 
     this.query = (queries, options) => {
       assertEnvironment(options?.as);
+      assertNoReadTime(options);
       const queriesResult = queries(queryHelpers());
       if (!queriesResult) return;
       return _query(
@@ -104,6 +105,7 @@ export class Collection {
 
     this.query.build = (options) => {
       assertEnvironment(options?.as);
+      assertNoReadTime(options);
       const queries = [];
       return {
         ...queryHelpers("builder", queries),
@@ -165,6 +167,7 @@ export class Collection {
 
   get(id, options) {
     assertEnvironment(options?.as);
+    assertNoReadTime(options);
     const doc = this.firebaseDoc(id);
 
     return new SubscriptionPromise({
@@ -198,6 +201,7 @@ export class Collection {
 
   many(ids, options) {
     assertEnvironment(options?.as);
+    assertNoReadTime(options);
     const docs = ids.map((id) => this.firebaseDoc(id));
 
     return new SubscriptionPromise({
@@ -954,6 +958,13 @@ export function wrapData(db, data, ref = pathToRef) {
 export function assertEnvironment(environment) {
   if (environment && environment !== "client")
     throw new Error(`Expected ${environment} environment`);
+}
+
+export function assertNoReadTime(options) {
+  if (options?.readTime !== undefined)
+    throw new Error(
+      "readTime (PITR) is not supported on the web SDK. Use the admin adapter.",
+    );
 }
 
 function request(payload) {

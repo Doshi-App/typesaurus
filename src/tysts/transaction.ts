@@ -543,4 +543,45 @@ async function tysts() {
       const r: undefined = $.result;
       void r;
     });
+
+  // readOnly transaction — chain has no `.write` phase; resolves directly.
+
+  const readOnlyResult = await transaction(db, { readOnly: true }).read(($) =>
+    $.db.users.get(db.users.id("asd")),
+  );
+  if (readOnlyResult) readOnlyResult.data.name;
+
+  const readOnlyChain = transaction(db, { readOnly: true }).read(($) =>
+    $.db.users.get(db.users.id("asd")),
+  );
+  // @ts-expect-error - readOnly chain has no `.write` phase.
+  readOnlyChain.write;
+
+  // readOnly supports readTime.
+
+  transaction(db, { readOnly: true, readTime: new Date() }).read(($) =>
+    $.db.users.get(db.users.id("asd")),
+  );
+
+  // @ts-expect-error - readTime is not valid on read-write transaction options.
+  transaction(db, { readTime: new Date() });
+
+  // Read-write supports maxAttempts.
+
+  transaction(db, { maxAttempts: 5 })
+    .read(($) => $.db.users.get(db.users.id("asd")))
+    .write(($) => $.result);
+
+  // @ts-expect-error - maxAttempts is not valid on readOnly transaction options.
+  transaction(db, { readOnly: true, maxAttempts: 5 });
+
+  // readTime accepted on standalone reads (admin-only at runtime).
+
+  await db.users.get(db.users.id("asd"), { readTime: new Date() });
+  await db.users.many([db.users.id("a"), db.users.id("b")], {
+    readTime: new Date(),
+  });
+  await db.users.query(($) => $.field("name").eq("Sasha"), {
+    readTime: new Date(),
+  });
 }

@@ -17,6 +17,28 @@ imported verbatim from upstream. See [NOTICE.md](./NOTICE.md).
 
 ## Unreleased — `@doshi/typesaurus`
 
+### Added
+
+- **Transaction & read options** ([#8](https://github.com/Doshi-App/typesaurus/issues/8)).
+  - `transaction(db, { readOnly: true })` produces a read-only chain whose
+    `.read()` resolves with the read result directly — no `.write()` phase.
+    Admin-only; the web adapter throws a clear error.
+  - `maxAttempts` forwarded to the underlying SDK on both adapters
+    (read-write transactions only).
+  - `readTime` accepted on read-only transactions and forwarded to admin's
+    `runTransaction`. Admin-only; web throws.
+  - `ReadOptions.readTime` accepted on `ref.get`, `collection.many`, and
+    `query` — admin SDK only. `ref.get` and `collection.many` route through
+    `Firestore.getAll(...refs, { readTime })`; queries are wrapped in a
+    hidden read-only transaction internally because the admin SDK does not
+    expose `readTime` on `Query.get`. Subscriptions silently ignore
+    `readTime` since Firestore does not support time-travel listeners. The
+    web adapter throws on any `readTime` option since the web SDK has no
+    PITR support.
+  - Types use mutually exclusive `ReadOnlyOptions` / `ReadWriteOptions`
+    shapes so `readTime` only compiles with `readOnly: true` and
+    `maxAttempts` only compiles without.
+
 ### Changed
 
 - Forked from upstream `typesaurus@10.7.0` (commit `38a5f02`).

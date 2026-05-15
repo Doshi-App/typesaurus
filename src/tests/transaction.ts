@@ -1,6 +1,15 @@
 import sinon from "sinon";
-import { beforeEach, describe, expect, it, beforeAll, afterAll } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  beforeAll,
+  afterAll,
+} from "vitest";
 import { schema, transaction, Typesaurus } from "..";
+import { firestoreSymbol } from "../adapter/admin/firebase.mjs";
 
 describe("transaction", () => {
   interface Counter {
@@ -459,4 +468,167 @@ describe("transaction", () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe.skipIf(typeof window !== "undefined" || process.env.BROWSER)(
+    "readOnly (admin-only)",
+    () => {
+      it("resolves with the read result directly, skipping .write", async () => {
+        const id = await db.counters.id();
+        const counter = db.counters.ref(id);
+        await counter.set({ count: 7 });
+
+        const result = await transaction(db, { readOnly: true }).read(($) =>
+          $.db.counters.get(counter.id),
+        );
+
+        expect(result?.data.count).toBe(7);
+      });
+    },
+  );
+
+  describe.skipIf(typeof window !== "undefined" || process.env.BROWSER)(
+    "admin SDK options forwarding",
+    () => {
+      let stub: sinon.SinonStub;
+      let captured: unknown;
+
+      beforeEach(() => {
+        captured = null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const firestore = (db as any)[firestoreSymbol]();
+        stub = sinon
+          .stub(firestore, "runTransaction")
+          .callsFake((_cb: unknown, opts: unknown) => {
+            captured = opts;
+            return Promise.resolve(undefined);
+          });
+      });
+
+      afterEach(() => {
+        stub.restore();
+      });
+
+      it("forwards maxAttempts to runTransaction", async () => {
+        await transaction(db, { maxAttempts: 3 })
+          .read(() => Promise.resolve(null))
+          .write(() => undefined);
+        expect(captured).toMatchObject({ maxAttempts: 3 });
+      });
+
+      it("forwards readOnly to runTransaction", async () => {
+        await transaction(db, { readOnly: true }).read(() =>
+          Promise.resolve(null),
+        );
+        expect(captured).toMatchObject({ readOnly: true });
+      });
+
+      it("forwards readTime alongside readOnly (Date → Timestamp)", async () => {
+        const readTime = new Date(2026, 0, 1);
+        await transaction(db, { readOnly: true, readTime }).read(() =>
+          Promise.resolve(null),
+        );
+        const opts = captured as {
+          readOnly: boolean;
+          readTime: { toDate(): Date };
+        };
+        expect(opts.readOnly).toBe(true);
+        expect(opts.readTime.toDate().getTime()).toBe(readTime.getTime());
+      });
+    },
+  );
+
+  describe.skipIf(typeof window !== "undefined" || process.env.BROWSER)(
+    "admin readTime forwarding (PITR)",
+    () => {
+      it("ref.get forwards readTime to firestore.getAll", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const firestore = (db as any)[firestoreSymbol]();
+        const readTime = new Date(2026, 0, 1);
+        let capturedArgs: unknown[] | null = null;
+        const stub = sinon
+          .stub(firestore, "getAll")
+          .callsFake((...args: unknown[]) => {
+            capturedArgs = args;
+            return Promise.resolve([{ exists: false, data: () => null }]);
+          });
+
+        try {
+          await db.counters.get(db.counters.id("does-not-matter"), {
+            readTime,
+          });
+        } finally {
+          stub.restore();
+        }
+
+        // getAll(...refs, readOptions): the last argument is the options bag,
+        // and Date should be converted to admin's Timestamp.
+        expect(capturedArgs).not.toBeNull();
+        const last = capturedArgs![capturedArgs!.length - 1] as {
+          readTime: { toDate(): Date };
+        };
+        expect(last.readTime.toDate().getTime()).toBe(readTime.getTime());
+      });
+
+      it("query.get wraps in a read-only transaction when readTime is set", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const firestore = (db as any)[firestoreSymbol]();
+        const readTime = new Date(2026, 0, 1);
+        let capturedOpts: unknown = null;
+        const stub = sinon
+          .stub(firestore, "runTransaction")
+          .callsFake((_cb: unknown, opts: unknown) => {
+            capturedOpts = opts;
+            return Promise.resolve([]);
+          });
+
+        try {
+          await db.counters.query(($) => $.field("count").eq(0), {
+            readTime,
+          });
+        } finally {
+          stub.restore();
+        }
+
+        const opts = capturedOpts as {
+          readOnly: boolean;
+          readTime: { toDate(): Date };
+        };
+        expect(opts.readOnly).toBe(true);
+        expect(opts.readTime.toDate().getTime()).toBe(readTime.getTime());
+      });
+
+      it("collection.many forwards readTime to firestore.getAll", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const firestore = (db as any)[firestoreSymbol]();
+        const readTime = new Date(2026, 0, 1);
+        let capturedArgs: unknown[] | null = null;
+        const stub = sinon
+          .stub(firestore, "getAll")
+          .callsFake((...args: unknown[]) => {
+            capturedArgs = args;
+            return Promise.resolve([
+              { exists: false, data: () => null },
+              { exists: false, data: () => null },
+            ]);
+          });
+
+        try {
+          await db.counters.many(
+            [db.counters.id("a"), db.counters.id("b")],
+            { readTime },
+          );
+        } finally {
+          stub.restore();
+        }
+
+        expect(capturedArgs).not.toBeNull();
+        // Two refs + options bag at the end.
+        expect(capturedArgs!.length).toBe(3);
+        const last = capturedArgs![capturedArgs!.length - 1] as {
+          readTime: { toDate(): Date };
+        };
+        expect(last.readTime.toDate().getTime()).toBe(readTime.getTime());
+      });
+    },
+  );
 });

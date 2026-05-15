@@ -77,6 +77,7 @@ export class Collection {
         this.firestore,
         this.adapter(),
         [].concat(queriesResult).filter((q) => !!q),
+        options,
       );
     };
 
@@ -85,7 +86,7 @@ export class Collection {
       const queries = [];
       return {
         ...queryHelpers("builder", queries),
-        run: () => query(this.firestore, this.adapter(), queries),
+        run: () => query(this.firestore, this.adapter(), queries, options),
       };
     };
   }
@@ -154,7 +155,13 @@ export class Collection {
       }),
 
       get: async () => {
-        const firebaseSnap = await doc.get();
+        const firebaseSnap = options?.readTime
+          ? (
+              await this.firestore().getAll(doc, {
+                readTime: toTimestamp(options.readTime),
+              })
+            )[0]
+          : await doc.get();
         const data = firebaseSnap.data();
         if (data) return new Doc(this, id, wrapData(this.db, data));
         return null;
@@ -186,9 +193,10 @@ export class Collection {
       get: async () => {
         // Firestore#getAll doesn't like empty lists
         if (ids.length === 0) return Promise.resolve([]);
-        const firebaseSnap = await this.firestore().getAll(
-          ...ids.map((id) => this.firebaseDoc(id)),
-        );
+        const getAllArgs = ids.map((id) => this.firebaseDoc(id));
+        if (options?.readTime)
+          getAllArgs.push({ readTime: toTimestamp(options.readTime) });
+        const firebaseSnap = await this.firestore().getAll(...getAllArgs);
         return firebaseSnap.map((firebaseSnap) => {
           if (!firebaseSnap.exists) return null;
           const firestoreData = firebaseSnap.data();
@@ -640,7 +648,7 @@ export function buildFirestoreQuery(firestore, baseQuery, queries) {
   return firestoreQuery;
 }
 
-export function query(firestore, adapter, queries) {
+export function query(firestore, adapter, queries, options) {
   const firestoreQuery = buildFirestoreQuery(
     firestore,
     adapter.collection(),
@@ -657,18 +665,18 @@ export function query(firestore, adapter, queries) {
     }),
 
     get: async () => {
+      const mapDocs = (firebaseSnap) =>
+        firebaseSnap.docs.map((firebaseSnap) => adapter.doc(firebaseSnap));
+      if (options?.readTime) {
+        // Admin SDK has no readTime on Query.get; route through a read-only
+        // transaction to enroll the query at the requested point in time.
+        return firestore().runTransaction(
+          async (t) => mapDocs(await t.get(firestoreQuery)),
+          { readOnly: true, readTime: toTimestamp(options.readTime) },
+        );
+      }
       const firebaseSnap = await firestoreQuery.get();
-      return firebaseSnap.docs.map((firebaseSnap) =>
-        adapter.doc(
-          firebaseSnap,
-          // {
-          //   firestoreData: true,
-          //   environment: a.environment as Environment,
-          //   serverTimestamps: options?.serverTimestamps,
-          //   ...a.getDocMeta(firebaseSnap)
-          // }
-        ),
-      );
+      return mapDocs(firebaseSnap);
     },
 
     subscribe: (onResult, onError) =>
@@ -740,6 +748,11 @@ export function query(firestore, adapter, queries) {
 
 function wherePath(field) {
   return field[0] === "__id__" ? FieldPath.documentId() : field.join(".");
+}
+
+export function toTimestamp(value) {
+  if (value instanceof Date) return Timestamp.fromDate(value);
+  return value;
 }
 
 export function queryHelpers(mode = "helpers", acc) {

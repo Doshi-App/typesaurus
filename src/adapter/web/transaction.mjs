@@ -16,19 +16,36 @@ import { firestoreSymbol } from "./firebase.mjs";
 
 export const transaction = (db, options) => {
   assertEnvironment(options?.as);
+  if (options?.readOnly)
+    throw new Error(
+      "readOnly transactions are not supported on the web SDK. Use the admin adapter.",
+    );
+  if (options?.readTime !== undefined)
+    throw new Error(
+      "readTime is not supported on the web SDK. Use the admin adapter.",
+    );
+
+  const sdkOptions = {};
+  if (options?.maxAttempts !== undefined)
+    sdkOptions.maxAttempts = options.maxAttempts;
+
   return {
     read: (readCallback) => {
       return {
         write: (writeCallback) =>
-          runTransaction(db[firestoreSymbol](), async (firebaseTransaction) => {
-            const readResult = await readCallback(
-              transactionReadHelpers(db, firebaseTransaction),
-            );
-            const writeResult = writeCallback(
-              transactionWriteHelpers(db, firebaseTransaction, readResult),
-            );
-            return writeDocsToDocs(db, writeResult);
-          }),
+          runTransaction(
+            db[firestoreSymbol](),
+            async (firebaseTransaction) => {
+              const readResult = await readCallback(
+                transactionReadHelpers(db, firebaseTransaction),
+              );
+              const writeResult = writeCallback(
+                transactionWriteHelpers(db, firebaseTransaction, readResult),
+              );
+              return writeDocsToDocs(db, writeResult);
+            },
+            sdkOptions,
+          ),
       };
     },
   };
