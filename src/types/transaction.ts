@@ -1,5 +1,6 @@
 import type { TypesaurusUtils as Utils } from "./utils.js";
 import type { TypesaurusCore as Core } from "./core.js";
+import type { TypesaurusQuery as Query } from "./query.js";
 import type { TypesaurusUpdate as Update } from "./update.js";
 
 export declare const transaction: TypesaurusTransaction.Function;
@@ -188,6 +189,21 @@ export namespace TypesaurusTransaction {
     path: string;
 
     get(id: Def["Id"]): Promise<ReadDoc<Def, Props> | null>;
+
+    /**
+     * Reads documents matching the query inside the transaction. Only
+     * supported with the firebase-admin SDK — calling this on the web
+     * (firebase-js-sdk) Transaction throws, because `Transaction.get()`
+     * on the JS SDK does not accept a `Query`. Returning a falsy value
+     * from the query getter resolves to `undefined`.
+     */
+    query<Getter extends Query.Getter<Def>>(
+      queries: Getter,
+    ): Promise<
+      ReturnType<Getter> extends Utils.Falsy
+        ? undefined
+        : ReadDoc<Def, Props>[]
+    >;
   }
 
   /**

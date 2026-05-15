@@ -380,4 +380,83 @@ describe("transaction", () => {
       expect(doc?.data.count).toBe(3);
     });
   });
+
+  // The firebase-admin SDK supports Transaction.get(query); the firebase-js
+  // SDK does not. The web adapter therefore exposes the same method but
+  // throws — these tests only run server-side.
+  const describeAdmin =
+    typeof window === "undefined" ? describe : describe.skip;
+  describeAdmin("query (admin only)", () => {
+    interface Tag {
+      tag: string;
+      count: number;
+    }
+
+    const tagsDB = schema(($) => ({
+      tags: $.collection<Tag>(),
+    }));
+
+    it("reads documents matching a where filter", async () => {
+      const namespace = `q-${Date.now()}-${Math.random()}`;
+      await Promise.all([
+        tagsDB.tags.add({ tag: `${namespace}:a`, count: 1 }),
+        tagsDB.tags.add({ tag: `${namespace}:b`, count: 5 }),
+        tagsDB.tags.add({ tag: `${namespace}:c`, count: 10 }),
+      ]);
+
+      const result = await transaction(tagsDB)
+        .read(($) =>
+          $.db.tags.query(($) => [
+            $.field("tag").gte(`${namespace}:`),
+            $.field("tag").lt(`${namespace};`),
+            $.field("count").gte(5),
+          ]),
+        )
+        .write(($) => $.result?.map((doc) => doc.data.tag).sort());
+
+      expect(result).toEqual([`${namespace}:b`, `${namespace}:c`]);
+    });
+
+    it("can write based on a transactional query", async () => {
+      const namespace = `qw-${Date.now()}-${Math.random()}`;
+      const refs = await Promise.all([
+        tagsDB.tags.add({ tag: `${namespace}:x`, count: 1 }),
+        tagsDB.tags.add({ tag: `${namespace}:y`, count: 1 }),
+      ]);
+
+      await transaction(tagsDB)
+        .read(($) =>
+          $.db.tags.query(($) => [
+            $.field("tag").gte(`${namespace}:`),
+            $.field("tag").lt(`${namespace};`),
+          ]),
+        )
+        .write(($) => {
+          $.result?.forEach((doc) =>
+            doc.update({ count: doc.data.count + 100 }),
+          );
+        });
+
+      const after = await Promise.all(refs.map((r) => r.get()));
+      expect(after.map((d) => d?.data.count).sort()).toEqual([101, 101]);
+    });
+
+    it("supports falsy queries to defer execution", async () => {
+      const result = await transaction(tagsDB)
+        .read(($) => $.db.tags.query(() => undefined))
+        .write(($) => $.result);
+      expect(result).toBe(undefined);
+    });
+
+    it("returns an empty array when no documents match", async () => {
+      const namespace = `qe-${Date.now()}-${Math.random()}`;
+      const result = await transaction(tagsDB)
+        .read(($) =>
+          $.db.tags.query(($) => $.field("tag").eq(`${namespace}:nonexistent`)),
+        )
+        .write(($) => $.result);
+
+      expect(result).toEqual([]);
+    });
+  });
 });

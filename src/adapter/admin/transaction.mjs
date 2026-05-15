@@ -4,7 +4,9 @@ import {
   Ref,
   UpdateField,
   assertEnvironment,
+  buildFirestoreQuery,
   pathRegExp,
+  queryHelpers,
   unwrapData,
   updateFields,
   updateHelpers,
@@ -87,6 +89,28 @@ class ReadCollection {
       wrapData(this.db, snapshot.data(), (db, path) =>
         pathToWriteRef(db, this.transaction, path),
       ),
+    );
+  }
+
+  async query(queries) {
+    const queriesResult = queries(queryHelpers());
+    if (!queriesResult) return undefined;
+    const firestore = this.firestore();
+    const firestoreQuery = buildFirestoreQuery(
+      firestore,
+      firestore.collection(this.path),
+      [].concat(queriesResult).filter((q) => !!q),
+    );
+    const snapshot = await this.transaction.get(firestoreQuery);
+    return snapshot.docs.map(
+      (firebaseSnap) =>
+        new ReadDoc(
+          this,
+          firebaseSnap.id,
+          wrapData(this.db, firebaseSnap.data(), (db, path) =>
+            pathToWriteRef(db, this.transaction, path),
+          ),
+        ),
     );
   }
 }

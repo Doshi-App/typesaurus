@@ -90,6 +90,14 @@ class ReadCollection {
       ),
     );
   }
+
+  query() {
+    throw new Error(
+      "Transaction.query() is only supported with the firebase-admin SDK. " +
+        "The Firebase JS SDK's Transaction.get() does not accept a Query. " +
+        "See https://github.com/firebase/firebase-js-sdk/issues/4828",
+    );
+  }
 }
 
 class ReadRef {
