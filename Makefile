@@ -60,6 +60,7 @@ build:
 	@make build-mts
 	@cp package.json lib
 	@cp *.md lib
+	@cp LICENSE lib
 
 sync-files:
 	@find src \( -name '*.d.ts' -o -name '*.json' \) -print | while IFS= read -r file; do \
