@@ -7,6 +7,7 @@ import {
   buildFirestoreQuery,
   pathRegExp,
   queryHelpers,
+  toTimestamp,
   unwrapData,
   updateFields,
   updateHelpers,
@@ -17,6 +18,22 @@ import { firestoreSymbol } from "./firebase.mjs";
 
 export const transaction = (db, options) => {
   assertEnvironment(options?.as);
+  if (options?.readOnly) {
+    const sdkOptions = { readOnly: true };
+    if (options.readTime !== undefined)
+      sdkOptions.readTime = toTimestamp(options.readTime);
+    return {
+      read: (readCallback) =>
+        db[firestoreSymbol]().runTransaction(
+          (firebaseTransaction) =>
+            readCallback(transactionReadHelpers(db, firebaseTransaction)),
+          sdkOptions,
+        ),
+    };
+  }
+  const sdkOptions = {};
+  if (options?.maxAttempts !== undefined)
+    sdkOptions.maxAttempts = options.maxAttempts;
   return {
     read: (readCallback) => {
       return {
@@ -29,7 +46,7 @@ export const transaction = (db, options) => {
               transactionWriteHelpers(db, firebaseTransaction, readResult),
             );
             return writeDocsToDocs(db, writeResult);
-          }),
+          }, sdkOptions),
       };
     },
   };

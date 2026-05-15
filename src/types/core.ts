@@ -499,7 +499,17 @@ export namespace TypesaurusCore {
     Environment extends RuntimeEnvironment,
     Props extends DocProps & { environment: Environment },
   > extends DocOptions<Props>,
-      OperationOptions<Environment> {}
+      OperationOptions<Environment> {
+    /**
+     * Read the document as of a point in time (PITR). Admin-only — the web
+     * adapter throws if this is set. Accepted on `ref.get`, `collection.many`,
+     * and `query` (queries are wrapped in a hidden read-only transaction
+     * internally because the admin SDK does not expose `readTime` on
+     * `Query.get`). Subscriptions silently ignore `readTime` since Firestore
+     * does not support time-travel listeners.
+     */
+    readTime?: Firebase.Timestamp | Date;
+  }
 
   export type NarrowDef<
     Def extends DocDef,

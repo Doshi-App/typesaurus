@@ -1,5 +1,6 @@
 import type { TypesaurusUtils as Utils } from "./utils.js";
 import type { TypesaurusCore as Core } from "./core.js";
+import type { TypesaurusFirebase as Firebase } from "./firebase.js";
 import type { TypesaurusQuery as Query } from "./query.js";
 import type { TypesaurusUpdate as Update } from "./update.js";
 
@@ -7,14 +8,61 @@ export declare const transaction: TypesaurusTransaction.Function;
 
 export namespace TypesaurusTransaction {
   export interface Function {
+    /**
+     * Read-only transaction. The chain terminates after `.read()` — no
+     * `.write()` phase. Only supported on the admin SDK.
+     */
     <
       Schema extends Core.PlainSchema,
       Environment extends Core.RuntimeEnvironment,
       Props extends Core.DocProps & { environment: Environment },
     >(
       db: Core.DB<Schema>,
-      options?: Core.OperationOptions<Environment>,
+      options: ReadOnlyOptions<Environment>,
+    ): ReadOnlyChain<Schema, Props>;
+
+    /**
+     * Read-write transaction. The default; produces a two-phase chain.
+     */
+    <
+      Schema extends Core.PlainSchema,
+      Environment extends Core.RuntimeEnvironment,
+      Props extends Core.DocProps & { environment: Environment },
+    >(
+      db: Core.DB<Schema>,
+      options?: ReadWriteOptions<Environment>,
     ): ReadChain<Schema, Props>;
+  }
+
+  /**
+   * Read-only transaction options. Mirrors `firebase-admin`'s
+   * `ReadOnlyTransactionOptions`. `readTime` requires `readOnly: true` and is
+   * admin-only.
+   */
+  export interface ReadOnlyOptions<Environment extends Core.RuntimeEnvironment>
+    extends Core.OperationOptions<Environment> {
+    readOnly: true;
+    readTime?: Firebase.Timestamp | Date;
+  }
+
+  /**
+   * Read-write transaction options. Mirrors `firebase-admin`'s
+   * `ReadWriteTransactionOptions`. `maxAttempts` is supported on both
+   * adapters.
+   */
+  export interface ReadWriteOptions<Environment extends Core.RuntimeEnvironment>
+    extends Core.OperationOptions<Environment> {
+    readOnly?: false;
+    maxAttempts?: number;
+  }
+
+  export interface ReadOnlyChain<
+    Schema extends Core.PlainSchema,
+    Props extends Core.DocProps,
+  > {
+    read: <ReadResult>(
+      callback: ReadFunction<Schema, ReadResult, Props>,
+    ) => Promise<ReadResult>;
   }
 
   /**
