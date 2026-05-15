@@ -1,4 +1,4 @@
-export { schema } from "./core.mjs";
+export { schema, listCollections } from "./core.mjs";
 export * from "./batch.mjs";
 export * from "./transaction.mjs";
 export * from "./groups.mjs";

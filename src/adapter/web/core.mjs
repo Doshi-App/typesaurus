@@ -160,6 +160,14 @@ export class Collection {
     return deleteDoc(this.firebaseDoc(id)).then(() => this.ref(id));
   }
 
+  create(_id, _data, _options) {
+    return Promise.reject(adminOnlyError("collection.create"));
+  }
+
+  recursiveDelete(_options) {
+    return Promise.reject(adminOnlyError("collection.recursiveDelete"));
+  }
+
   all(options) {
     assertEnvironment(options?.as);
     return all(this.adapter());
@@ -304,6 +312,18 @@ export class Ref {
     return this.collection.upset(this.id, data, options);
   }
 
+  create(_data, _options) {
+    return Promise.reject(adminOnlyError("ref.create"));
+  }
+
+  recursiveDelete(_options) {
+    return Promise.reject(adminOnlyError("ref.recursiveDelete"));
+  }
+
+  listCollections(_options) {
+    return Promise.reject(adminOnlyError("ref.listCollections"));
+  }
+
   async remove() {
     return this.collection.remove(this.id);
   }
@@ -341,6 +361,18 @@ export class Doc {
 
   upset(data, options) {
     return this.ref.upset(data, options);
+  }
+
+  create(_data, _options) {
+    return Promise.reject(adminOnlyError("doc.create"));
+  }
+
+  recursiveDelete(_options) {
+    return Promise.reject(adminOnlyError("doc.recursiveDelete"));
+  }
+
+  listCollections(_options) {
+    return Promise.reject(adminOnlyError("doc.listCollections"));
   }
 
   remove() {
@@ -504,6 +536,10 @@ function schemaHelpers() {
       };
     },
   };
+}
+
+export function listCollections(_db, _options) {
+  return Promise.reject(adminOnlyError("listCollections"));
 }
 
 function db(firestore, schema, nestedPath) {
@@ -776,6 +812,8 @@ export function _query(firestore, adapter, queries) {
       });
       return snap.data().result;
     },
+
+    explain: (_options) => Promise.reject(adminOnlyError("query.explain")),
   });
 
   return sp;
@@ -965,6 +1003,12 @@ export function assertNoReadTime(options) {
     throw new Error(
       "readTime (PITR) is not supported on the web SDK. Use the admin adapter.",
     );
+}
+
+export function adminOnlyError(method) {
+  return new Error(
+    `${method} is admin-only and is not supported on the web SDK. Use the admin adapter.`,
+  );
 }
 
 function request(payload) {

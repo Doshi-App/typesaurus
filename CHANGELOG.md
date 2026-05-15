@@ -38,6 +38,24 @@ imported verbatim from upstream. See [NOTICE.md](./NOTICE.md).
   - Types use mutually exclusive `ReadOnlyOptions` / `ReadWriteOptions`
     shapes so `readTime` only compiles with `readOnly: true` and
     `maxAttempts` only compiles without.
+- **Admin-only passthroughs** ([#9](https://github.com/Doshi-App/typesaurus/issues/9)).
+  - `ref.create(data)` and `collection.create(id, data)` — pass-through to
+    the admin SDK's `DocumentReference.create` (fails if the doc already
+    exists). Admin-only; the web adapter rejects with a clear error.
+  - `ref.recursiveDelete()` and `collection.recursiveDelete()` — pass-through
+    to the admin SDK's `Firestore.recursiveDelete`. Admin-only.
+  - `ref.listCollections()` and top-level `listCollections(db)` —
+    pass-through to the admin SDK's `DocumentReference.listCollections` /
+    `Firestore.listCollections`. Returns plain collection ids (`string[]`)
+    because untyped subcollections are not represented in the schema.
+    Top-level function form chosen over `db.listCollections()` so the
+    `DB<Schema>` structural type stays compatible with `AnyDB`.
+  - `query.explain({ analyze })` — pass-through to the admin SDK's
+    `Query.explain`. Returns the SDK's `ExplainResults` shape verbatim
+    (structurally re-typed; no runtime dep added).
+  - All four use an `Environment extends "server"` type-level gate so
+    `{ as: "client" }` is a compile error. The web adapter also rejects at
+    runtime since types are shared across adapters in this package.
 
 ### Changed
 

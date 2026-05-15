@@ -1001,6 +1001,38 @@ export namespace TypesaurusCore {
 
     remove(): Promise<Ref<Def>>;
 
+    /**
+     * Creates the document, failing if it already exists. Mirrors the admin
+     * SDK's `DocumentReference.create`. Admin-only — the web adapter throws
+     * at runtime, and the `Environment extends "server"` constraint blocks
+     * calls that explicitly request `as: "client"` at compile time.
+     */
+    create<Environment extends "server" = "server">(
+      data: AssignArg<
+        UnionVariableModelType<Def["WideModel"]>,
+        DocProps & { environment: Environment }
+      >,
+      options?: OperationOptions<Environment>,
+    ): Promise<Ref<Def>>;
+
+    /**
+     * Recursively deletes the document and any subcollections beneath it.
+     * Mirrors the admin SDK's `Firestore.recursiveDelete`. Admin-only.
+     */
+    recursiveDelete<Environment extends "server" = "server">(
+      options?: OperationOptions<Environment>,
+    ): Promise<void>;
+
+    /**
+     * Lists subcollection ids beneath the document. Mirrors the admin SDK's
+     * `DocumentReference.listCollections`. Returns plain collection ids
+     * because the schema does not know about untyped subcollections.
+     * Admin-only.
+     */
+    listCollections<Environment extends "server" = "server">(
+      options?: OperationOptions<Environment>,
+    ): Promise<string[]>;
+
     narrow<NarrowToModel extends ModelType>(
       fn: DocNarrowFunction<
         IntersectVariableModelType<Def["WideModel"]>,
@@ -1104,6 +1136,31 @@ export namespace TypesaurusCore {
     update: Update.CollectionFunction<Def>;
 
     remove(id: Def["Id"]): Promise<Ref<Def>>;
+
+    /**
+     * Creates the document at the given id, failing if it already exists.
+     * Mirrors the admin SDK's `DocumentReference.create`. Admin-only — the
+     * web adapter throws at runtime, and the `Environment extends "server"`
+     * constraint blocks calls that explicitly request `as: "client"` at
+     * compile time.
+     */
+    create<Environment extends "server" = "server">(
+      id: Def["Id"],
+      data: AssignArg<
+        UnionVariableModelType<Def["WideModel"]>,
+        DocProps & { environment: Environment }
+      >,
+      options?: OperationOptions<Environment>,
+    ): Promise<Ref<Def>>;
+
+    /**
+     * Recursively deletes every document in the collection. Mirrors the
+     * admin SDK's `Firestore.recursiveDelete` applied to a collection
+     * reference. Admin-only.
+     */
+    recursiveDelete<Environment extends "server" = "server">(
+      options?: OperationOptions<Environment>,
+    ): Promise<void>;
 
     ref(id: Def["Id"]): Ref<Def>;
 
@@ -1286,6 +1343,20 @@ export namespace TypesaurusCore {
           : never
       : never;
   };
+
+  /**
+   * Lists top-level collection ids in the database. Mirrors the admin SDK's
+   * `Firestore.listCollections`. Admin-only — exposed as a top-level
+   * function (rather than `db.listCollections()`) to avoid colliding with
+   * user-defined collection names and to preserve the structural shape of
+   * `DB<Schema>`.
+   */
+  export interface ListCollectionsFunction {
+    <DB extends AnyDB, Environment extends "server" = "server">(
+      db: DB,
+      options?: OperationOptions<Environment>,
+    ): Promise<string[]>;
+  }
 
   /**
    * Resolves collection def.
