@@ -550,10 +550,8 @@ function subShortcut(firestore, schema) {
   );
 }
 
-export function query(firestore, adapter, queries) {
-  // Query accumulator, will contain final Firestore query with all the
-  // filters and limits.
-  let firestoreQuery = adapter.collection();
+export function buildFirestoreQuery(firestore, baseQuery, queries) {
+  let firestoreQuery = baseQuery;
   let cursors = [];
 
   queries.forEach((query) => {
@@ -638,6 +636,16 @@ export function query(firestore, adapter, queries) {
     groupedCursors.forEach(([method, values]) => {
       firestoreQuery = firestoreQuery[method](...values);
     });
+
+  return firestoreQuery;
+}
+
+export function query(firestore, adapter, queries) {
+  const firestoreQuery = buildFirestoreQuery(
+    firestore,
+    adapter.collection(),
+    queries,
+  );
 
   const sp = new SubscriptionPromise({
     request: request({

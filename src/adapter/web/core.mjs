@@ -561,7 +561,7 @@ function subShortcut(firestore, schema) {
   );
 }
 
-export function _query(firestore, adapter, queries) {
+export function buildFirestoreQuery(firestore, baseCollection, queries) {
   const firebaseWhereQueries = [];
   const firebaseRestQueries = [];
   let cursors = [];
@@ -659,13 +659,17 @@ export function _query(firestore, adapter, queries) {
       );
     });
 
+  return query(
+    baseCollection,
+    and(...firebaseWhereQueries),
+    ...firebaseRestQueries,
+    ...firebaseCursors,
+  );
+}
+
+export function _query(firestore, adapter, queries) {
   const firebaseQuery = () =>
-    query(
-      adapter.collection(),
-      and(...firebaseWhereQueries),
-      ...firebaseRestQueries,
-      ...firebaseCursors,
-    );
+    buildFirestoreQuery(firestore, adapter.collection(), queries);
 
   const sp = new SubscriptionPromise({
     request: request({

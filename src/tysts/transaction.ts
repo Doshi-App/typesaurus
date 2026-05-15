@@ -517,4 +517,30 @@ async function tysts() {
     // @ts-expect-error
     result.user;
   }
+
+  // Transactional query (admin-only at runtime; type surface is uniform)
+  await transaction(db)
+    .read(($) => $.db.posts.query(($) => $.field("likes").gt(0)))
+    .write(($) => {
+      // Result is an array of write docs
+      $.result?.forEach((doc) => {
+        // Strongly-typed model data
+        doc.data.title;
+        doc.data.text;
+        // @ts-expect-error - no such field
+        doc.data.nope;
+        // Each doc is a write doc with mutators
+        doc.update({ likes: (doc.data.likes ?? 0) + 1 });
+      });
+    });
+
+  // Falsy query → undefined result (awaited)
+  await transaction(db)
+    .read(($) => $.db.posts.query(() => undefined))
+    .write(($) => {
+      // @ts-expect-error - result is undefined; no forEach
+      $.result?.forEach;
+      const r: undefined = $.result;
+      void r;
+    });
 }
