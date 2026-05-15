@@ -7,6 +7,76 @@ This change log follows the format documented in [Keep a CHANGELOG].
 [semantic versioning]: http://semver.org/
 [keep a changelog]: http://keepachangelog.com/
 
+---
+
+## `@doshi/typesaurus` fork
+
+The entries below this line are changes made in the Doshi-maintained fork of
+[`typesaurus`](https://github.com/kossnocorp/typesaurus). Entries above are
+imported verbatim from upstream. See [NOTICE.md](./NOTICE.md).
+
+## Unreleased — `@doshi/typesaurus`
+
+### Changed
+
+- Forked from upstream `typesaurus@10.7.0` (commit `38a5f02`).
+- Renamed package from `typesaurus` to `@doshi/typesaurus`.
+- Added `LICENSE` file (MIT) — upstream declared MIT in `package.json` but did not ship a `LICENSE` file; this discharges the include-license-text obligation cleanly.
+- Added `NOTICE.md` with attribution and fork rationale.
+- Updated `README.md` to flag the fork and document migration from upstream.
+- Added `docs/adr/0001-fork-rationale-and-v1-scope.md` and `docs/adr/0002-peer-dependency-strategy.md` capturing the design decisions for v11.
+
+## Planned — `v11.0.0`
+
+Versioning, scope, and ranges below are the outcome of the grilling captured in
+[ADR 0001](./docs/adr/0001-fork-rationale-and-v1-scope.md) and
+[ADR 0002](./docs/adr/0002-peer-dependency-strategy.md).
+
+### `11.0.0-rc.0` — compat bump only
+
+- Add `peerDependencies` for `firebase` and `firebase-admin`, both flagged
+  `peerDependenciesMeta.{...}.optional: true`.
+- Declared supported peer ranges: `firebase >=10.13 <13`, `firebase-admin >=12.7 <14`.
+- Bump dev toolchain: `firebase`, `firebase-admin`, `firebase-tools` to current;
+  `typescript@^6`, `@types/node@^25`, `vitest@^3`.
+- CI matrix: 5 jobs (3 web × firebase majors, 2 admin × admin majors), emulator-only.
+- Source API: bytewise equivalent to upstream `typesaurus@10.7.0`.
+- Doshi server flips imports to `@doshi/typesaurus@next` at this point.
+
+### Subsequent RCs — additive features
+
+Sequencing not pinned; ships when each lands cleanly.
+
+- **Vector search.** Wrap `VectorValue` and `findNearest` (web + admin).
+- **Point-in-time recovery.** Surface read-at-timestamp on gets and queries.
+  Test coverage: SDK-boundary unit tests only (Firestore emulator does not
+  support PITR).
+- **Multi-database support.** Allow named databases beyond `(default)` through
+  the `schema()` factory.
+- **Transaction queries.** Pass `where`-filtered queries into `transaction.get()`.
+  Available in `firebase-admin` since v11; never exposed by upstream typesaurus.
+  Highest-priority gap for Doshi's own usage.
+
+### `11.0.0` — promotion to `latest`
+
+Gating conditions:
+
+1. RCs have run in Doshi production for ≥ one sprint without
+   typesaurus-attributed incidents.
+2. At least one external consumer has tried an RC (announced via a
+   courtesy issue on the upstream `kossnocorp/typesaurus` repo).
+
+### Deferred to v11.x or later
+
+- Firestore Pipelines wrapper (preview API, moving target).
+- Bundle loading.
+- Dev-toolchain refresh for Babel / Prettier / Sinon / Playwright /
+  size-limit.
+- Real-Firestore nightly CI lane (for PITR validation).
+- Splitting into `@doshi/typesaurus-web` and `@doshi/typesaurus-admin`.
+
+---
+
 ## v10.7.0 - 2024-04-23
 
 ### Added

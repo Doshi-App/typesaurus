@@ -1,8 +1,12 @@
-🎉️ NEW: [Typesaurus X is out](https://blog.typesaurus.com/typesaurus-x-is-out/)!
+> **`@doshi/typesaurus` — a maintained fork of [typesaurus](https://github.com/kossnocorp/typesaurus) by [Sasha Koss](https://github.com/kossnocorp).**
+>
+> Upstream is unreleased since 2024-06-30. This fork is maintained by [Doshi](https://doshi.app) to keep the library current with the latest Firebase JS SDK and Firebase Admin SDK features. See [NOTICE.md](./NOTICE.md) for attribution, [LICENSE](./LICENSE) for the MIT license, and [CHANGELOG.md](./CHANGELOG.md) for fork-specific changes.
+>
+> Original maintainer: please reach out at <engineering@doshi.app> — happy to upstream changes.
 
 ![](https://raw.githubusercontent.com/kossnocorp/typesaurus/main/promo.gif)
 
-# 🦕 Typesaurus
+# 🦕 Typesaurus (`@doshi/typesaurus`)
 
 TypeScript-first ODM for Firestore.
 
@@ -20,14 +24,15 @@ _Looking for **React** adaptor?_ Check [Typesaurus React](https://github.com/kos
 
 ## Installation
 
-The library is available as an [npm package](https://www.npmjs.com/package/typesaurus).
-To install Typesaurus, run:
+The fork is published as [`@doshi/typesaurus`](https://www.npmjs.com/package/@doshi/typesaurus):
 
 ```sh
-npm install --save typesaurus firebase firebase-admin
+pnpm add @doshi/typesaurus firebase firebase-admin
 ```
 
 _Note that Typesaurus requires the `firebase` package to work in the web environment and `firebase-admin` to work in Node.js. These packages aren't listed as dependencies, so they won't install automatically with the Typesaurus package._
+
+> Migrating from upstream `typesaurus`? Replace the import: `import { schema } from 'typesaurus'` → `import { schema } from '@doshi/typesaurus'`. The public API is unchanged at the fork point.
 
 ## Features
 

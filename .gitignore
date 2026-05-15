@@ -2,7 +2,11 @@ node_modules
 lib
 /secrets
 .envrc
-docs
+docs/*
+!docs/adr
+!docs/adr/**
+!docs/agents
+!docs/agents/**
 firestore-debug.log
 firebase-debug.log
 .firebaserc

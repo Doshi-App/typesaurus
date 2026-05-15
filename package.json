@@ -1,7 +1,7 @@
 {
-  "name": "typesaurus",
+  "name": "@doshi/typesaurus",
   "version": "10.7.0",
-  "description": "Type-safe ODM for Firestore",
+  "description": "Type-safe ODM for Firestore — Doshi fork of typesaurus, maintained against current Firebase SDKs.",
   "keywords": [
     "Firebase",
     "Firestore",
@@ -178,8 +178,11 @@
       }
     }
   },
-  "repository": "https://github.com/kossnocorp/typesaurus",
-  "author": "Sasha Koss <koss@nocorp.me>",
+  "repository": "https://github.com/Doshi-App/typesaurus",
+  "author": "Doshi <engineering@doshi.app>",
+  "contributors": [
+    "Sasha Koss <koss@nocorp.me> (original author of typesaurus)"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.18.10",
