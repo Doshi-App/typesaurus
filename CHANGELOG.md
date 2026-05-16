@@ -15,10 +15,45 @@ The entries below this line are changes made in the Doshi-maintained fork of
 [`typesaurus`](https://github.com/kossnocorp/typesaurus). Entries above are
 imported verbatim from upstream. See [NOTICE.md](./NOTICE.md).
 
-## Unreleased — `@doshi/typesaurus`
+## Planned — `v11.0.0`
 
-### Added
+Versioning, scope, and ranges below are the outcome of the grilling captured in
+[ADR 0001](./docs/adr/0001-fork-rationale-and-v1-scope.md) and
+[ADR 0002](./docs/adr/0002-peer-dependency-strategy.md).
 
+### `11.0.0-rc.0` — compat bump only
+
+- Forked from upstream `typesaurus@10.7.0` (commit `38a5f02`).
+- Renamed package from `typesaurus` to `@doshi/typesaurus`.
+- Added `LICENSE` file (MIT) — upstream declared MIT in `package.json` but did not ship a `LICENSE` file; this discharges the include-license-text obligation cleanly.
+- Added `NOTICE.md` with attribution and fork rationale.
+- Updated `README.md` to flag the fork and document migration from upstream.
+- Added `docs/adr/0001-fork-rationale-and-v1-scope.md` and `docs/adr/0002-peer-dependency-strategy.md` capturing the design decisions for v11.
+- Add `peerDependencies` for `firebase` and `firebase-admin`, both flagged
+  `peerDependenciesMeta.{...}.optional: true`.
+- Declared supported peer ranges: `firebase >=10.13 <13`, `firebase-admin >=12.7 <14`.
+- Bump dev toolchain: `firebase`, `firebase-admin`, `firebase-tools` to current;
+  `typescript@^6`, `@types/node@^25`, `vitest@^3`.
+- CI matrix: 5 jobs (3 web × firebase majors, 2 admin × admin majors), emulator-only.
+- Source API: bytewise equivalent to upstream `typesaurus@10.7.0`.
+- Doshi server flips imports to `@doshi/typesaurus@next` at this point.
+
+### `11.0.0-rc.1` — feature drops
+
+- **Query inside transactions** ([#7](https://github.com/Doshi-App/typesaurus/pull/7)).
+  - `ReadCollection.query(($) => ...)` is now available inside the
+    `transaction(db).read($).db.<collection>` API, mirroring the regular
+    `collection.query` DSL and resolving to `Promise<ReadDoc[]>`. Builds on
+    the admin SDK's `Transaction.get(query)`.
+  - Admin-only — the Firebase JS SDK does not support `Transaction.get(query)`
+    (see [firebase-js-sdk#4828](https://github.com/firebase/firebase-js-sdk/issues/4828)),
+    so the web adapter exposes the same method but throws a clear error.
+    The type surface is uniform across adapters.
+  - Returning a falsy value from the query getter resolves to `undefined`
+    (same shape as `collection.query`), to support deferred-query patterns.
+  - Internal: extracted `buildFirestoreQuery` out of `query()` in both
+    adapter `core.mjs` files so the build step is reusable by the
+    transaction adapter.
 - **Transaction & read options** ([#8](https://github.com/Doshi-App/typesaurus/issues/8)).
   - `transaction(db, { readOnly: true })` produces a read-only chain whose
     `.read()` resolves with the read result directly — no `.write()` phase.
@@ -38,46 +73,32 @@ imported verbatim from upstream. See [NOTICE.md](./NOTICE.md).
   - Types use mutually exclusive `ReadOnlyOptions` / `ReadWriteOptions`
     shapes so `readTime` only compiles with `readOnly: true` and
     `maxAttempts` only compiles without.
-
-### Changed
-
-- Forked from upstream `typesaurus@10.7.0` (commit `38a5f02`).
-- Renamed package from `typesaurus` to `@doshi/typesaurus`.
-- Added `LICENSE` file (MIT) — upstream declared MIT in `package.json` but did not ship a `LICENSE` file; this discharges the include-license-text obligation cleanly.
-- Added `NOTICE.md` with attribution and fork rationale.
-- Updated `README.md` to flag the fork and document migration from upstream.
-- Added `docs/adr/0001-fork-rationale-and-v1-scope.md` and `docs/adr/0002-peer-dependency-strategy.md` capturing the design decisions for v11.
-
-## Planned — `v11.0.0`
-
-Versioning, scope, and ranges below are the outcome of the grilling captured in
-[ADR 0001](./docs/adr/0001-fork-rationale-and-v1-scope.md) and
-[ADR 0002](./docs/adr/0002-peer-dependency-strategy.md).
-
-### `11.0.0-rc.0` — compat bump only
-
-- Add `peerDependencies` for `firebase` and `firebase-admin`, both flagged
-  `peerDependenciesMeta.{...}.optional: true`.
-- Declared supported peer ranges: `firebase >=10.13 <13`, `firebase-admin >=12.7 <14`.
-- Bump dev toolchain: `firebase`, `firebase-admin`, `firebase-tools` to current;
-  `typescript@^6`, `@types/node@^25`, `vitest@^3`.
-- CI matrix: 5 jobs (3 web × firebase majors, 2 admin × admin majors), emulator-only.
-- Source API: bytewise equivalent to upstream `typesaurus@10.7.0`.
-- Doshi server flips imports to `@doshi/typesaurus@next` at this point.
+- **Admin-only passthroughs** ([#9](https://github.com/Doshi-App/typesaurus/issues/9)).
+  - `ref.create(data)` and `collection.create(id, data)` — pass-through to
+    the admin SDK's `DocumentReference.create` (fails if the doc already
+    exists). Admin-only; the web adapter rejects with a clear error.
+  - `ref.recursiveDelete()` and `collection.recursiveDelete()` — pass-through
+    to the admin SDK's `Firestore.recursiveDelete`. Admin-only.
+  - `ref.listCollections()` and top-level `listCollections(db)` —
+    pass-through to the admin SDK's `DocumentReference.listCollections` /
+    `Firestore.listCollections`. Returns plain collection ids (`string[]`)
+    because untyped subcollections are not represented in the schema.
+    Top-level function form chosen over `db.listCollections()` so the
+    `DB<Schema>` structural type stays compatible with `AnyDB`.
+  - `query.explain({ analyze })` — pass-through to the admin SDK's
+    `Query.explain`. Returns the SDK's `ExplainResults` shape verbatim
+    (structurally re-typed; no runtime dep added).
+  - All four use an `Environment extends "server"` type-level gate so
+    `{ as: "client" }` is a compile error. The web adapter also rejects at
+    runtime since types are shared across adapters in this package.
 
 ### Subsequent RCs — additive features
 
 Sequencing not pinned; ships when each lands cleanly.
 
 - **Vector search.** Wrap `VectorValue` and `findNearest` (web + admin).
-- **Point-in-time recovery.** Surface read-at-timestamp on gets and queries.
-  Test coverage: SDK-boundary unit tests only (Firestore emulator does not
-  support PITR).
 - **Multi-database support.** Allow named databases beyond `(default)` through
   the `schema()` factory.
-- **Transaction queries.** Pass `where`-filtered queries into `transaction.get()`.
-  Available in `firebase-admin` since v11; never exposed by upstream typesaurus.
-  Highest-priority gap for Doshi's own usage.
 
 ### `11.0.0` — promotion to `latest`
 

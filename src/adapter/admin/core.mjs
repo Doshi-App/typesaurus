@@ -131,9 +131,21 @@ export class Collection {
       .then(() => this.ref(id));
   }
 
+  create(id, data, options) {
+    assertEnvironment(options?.as);
+    return this.firebaseDoc(id)
+      .create(writeData(this.firestore, data))
+      .then(() => this.ref(id));
+  }
+
   async remove(id) {
     await this.firebaseDoc(id).delete();
     return this.ref(id);
+  }
+
+  async recursiveDelete(options) {
+    assertEnvironment(options?.as);
+    await this.firestore().recursiveDelete(this.firebaseCollection());
   }
 
   all(options) {
@@ -296,12 +308,30 @@ export class Ref {
     return this.collection.upset(this.id, data, options);
   }
 
+  create(data, options) {
+    return this.collection.create(this.id, data, options);
+  }
+
   buildUpdate(data, options) {
     return this.collection.buildUpdate(this.id, data, options);
   }
 
   async remove() {
     return this.collection.remove(this.id);
+  }
+
+  async recursiveDelete(options) {
+    assertEnvironment(options?.as);
+    await this.collection.firestore().recursiveDelete(
+      this.collection.firebaseDoc(this.id),
+    );
+  }
+
+  async listCollections(options) {
+    assertEnvironment(options?.as);
+    const collections = await this.collection.firebaseDoc(this.id)
+      .listCollections();
+    return collections.map((c) => c.id);
   }
 
   as() {
@@ -333,6 +363,18 @@ export class Doc {
 
   set(data, options) {
     return this.ref.set(data, options);
+  }
+
+  create(data, options) {
+    return this.ref.create(data, options);
+  }
+
+  recursiveDelete(options) {
+    return this.ref.recursiveDelete(options);
+  }
+
+  listCollections(options) {
+    return this.ref.listCollections(options);
   }
 
   upset(data, options) {
@@ -496,6 +538,13 @@ function schemaHelpers() {
       };
     },
   };
+}
+
+export async function listCollections(db, options) {
+  assertEnvironment(options?.as);
+  const firestore = db[firestoreSymbol];
+  const collections = await firestore().listCollections();
+  return collections.map((c) => c.id);
 }
 
 function db(firestore, schema, nestedPath) {
@@ -740,6 +789,12 @@ export function query(firestore, adapter, queries, options) {
         .aggregate({ result: AggregateField.average(field) })
         .get();
       return snap.data().result;
+    },
+
+    explain: async (options) => {
+      assertEnvironment(options?.as);
+      const { as: _as, ...explainOptions } = options || {};
+      return firestoreQuery.explain(explainOptions);
     },
   });
 

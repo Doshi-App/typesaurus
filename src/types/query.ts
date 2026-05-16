@@ -1,5 +1,6 @@
 import type { TypesaurusUtils as Utils } from "./utils.js";
 import type { TypesaurusCore as Core } from "./core.js";
+import type { TypesaurusFirebase as Firebase } from "./firebase.js";
 
 export namespace TypesaurusQuery {
   export interface Function<Def extends Core.DocDef> {
@@ -46,6 +47,16 @@ export namespace TypesaurusQuery {
     average(
       field: Utils.KeysOfType<Core.DocModel<Def>, number>,
     ): Promise<number>;
+
+    /**
+     * Returns query planning and (when `analyze` is true) execution stats.
+     * Mirrors the admin SDK's `Query.explain`. Admin-only — the web adapter
+     * throws at runtime, and the `Environment extends "server"` constraint
+     * blocks calls that explicitly request `as: "client"` at compile time.
+     */
+    explain<Environment extends "server" = "server">(
+      options?: Firebase.ExplainOptions & Core.OperationOptions<Environment>,
+    ): Promise<Firebase.ExplainResults<Core.Doc<Def, Props>[]>>;
   }
 
   export type Data<Model extends Core.ModelType> =

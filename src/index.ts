@@ -15,6 +15,8 @@ export * from "./sp/index.js";
 
 export declare const schema: Core.Function;
 
+export declare const listCollections: Core.ListCollectionsFunction;
+
 export namespace Typesaurus {
   /**
    * The type represents your database structure and provides type shortcuts for
