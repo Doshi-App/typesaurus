@@ -6,5 +6,6 @@ export const firestoreSymbol: unique symbol;
 
 export function firestore(options?: {
   app?: string;
+  databaseId?: string;
   server?: { app?: string; preferRest?: boolean };
 }): unknown;
