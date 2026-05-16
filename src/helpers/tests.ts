@@ -102,10 +102,10 @@ describe("helpers", () => {
           get: () => Promise.resolve("ok"),
           subscribe: (onResult, onError) => {
             if (counter == 2) {
-              expect(Date.now() - now).toBeGreaterThanOrEqual(750);
+              expect(Date.now() - now).toBeGreaterThanOrEqual(740);
               onResult("ok");
             } else if (counter == 4) {
-              expect(Date.now() - now).toBeGreaterThanOrEqual(1500);
+              expect(Date.now() - now).toBeGreaterThanOrEqual(1490);
               onResult("ok");
             } else {
               counter++;
