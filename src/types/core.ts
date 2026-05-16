@@ -1767,9 +1767,17 @@ export namespace TypesaurusCore {
   export interface Options {
     /** The app name. */
     app?: string;
+    /**
+     * Target a named Firestore database. When omitted, the schema targets
+     * the `(default)` database. The same database id addresses the same
+     * database regardless of the resolved adapter (web vs admin), so this
+     * lives at the top of the options bag rather than nested per-adapter.
+     */
+    databaseId?: string;
     /** The server options. */
     server?: OptionsServer;
     /** The client options. */
+    client?: OptionsClient;
   }
 
   /**
@@ -1786,7 +1794,7 @@ export namespace TypesaurusCore {
   /**
    * The client options.
    */
-  export interface OptionsServer {
+  export interface OptionsClient {
     /** The client app name. It takes priority over the root's app name. */
     app?: string;
   }

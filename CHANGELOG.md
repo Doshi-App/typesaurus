@@ -99,6 +99,29 @@ Sequencing not pinned; ships when each lands cleanly.
 - **Vector search.** Wrap `VectorValue` and `findNearest` (web + admin).
 - **Multi-database support.** Allow named databases beyond `(default)` through
   the `schema()` factory.
+  - New top-level `Options.databaseId?: string`. When omitted, the schema
+    targets the `(default)` database (no behaviour change for existing
+    consumers — no opt-in or migration step required).
+  - Admin adapter: routes to `getFirestore(app, databaseId)`; when paired
+    with `server.preferRest`, routes through
+    `initializeFirestore(app, { preferRest }, databaseId)` since that is
+    the only entry point that accepts both settings and a database id.
+  - Web adapter: routes to `getFirestore(app, databaseId)`.
+  - Top-level placement (not `server.databaseId` / `client.databaseId`)
+    reflects that a Firestore database is a project-level resource — the
+    same id targets the same database regardless of which SDK transports
+    the request. Per-adapter override is intentionally not supported;
+    workaround is to call `schema()` twice with different options.
+  - Bundled fix: the `Options` type previously declared a duplicate
+    `OptionsServer` interface in the slot meant for `OptionsClient` (and
+    omitted the `client` field on `Options` entirely). The web adapter
+    has read `options?.client?.app` since the fork; the type now matches.
+  - Emulator caveat: the Firestore emulator advertises that it "does not
+    support multiple databases yet," but writes against a named database
+    are isolated by URL path in practice. The admin-side integration
+    test in `src/tests/multi-database.ts` pins that behaviour. Web
+    coverage is type-level only (no browser CI lane — see the deferred
+    web matrix in `.github/workflows/test.yml`).
 
 ### `11.0.0` — promotion to `latest`
 
