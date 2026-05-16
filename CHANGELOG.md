@@ -92,13 +92,9 @@ Versioning, scope, and ranges below are the outcome of the grilling captured in
     `{ as: "client" }` is a compile error. The web adapter also rejects at
     runtime since types are shared across adapters in this package.
 
-### Subsequent RCs — additive features
+### `11.0.0-rc.2` — feature drop
 
-Sequencing not pinned; ships when each lands cleanly.
-
-- **Vector search.** Wrap `VectorValue` and `findNearest` (web + admin).
-- **Multi-database support.** Allow named databases beyond `(default)` through
-  the `schema()` factory.
+- **Multi-database support** ([#12](https://github.com/Doshi-App/typesaurus/pull/12)).
   - New top-level `Options.databaseId?: string`. When omitted, the schema
     targets the `(default)` database (no behaviour change for existing
     consumers — no opt-in or migration step required).
@@ -122,6 +118,20 @@ Sequencing not pinned; ships when each lands cleanly.
     test in `src/tests/multi-database.ts` pins that behaviour. Web
     coverage is type-level only (no browser CI lane — see the deferred
     web matrix in `.github/workflows/test.yml`).
+- **Infrastructure** (no source-API impact).
+  - Tag-driven npm release pipeline added ([#13](https://github.com/Doshi-App/typesaurus/pull/13))
+    using npm Trusted Publishing (OIDC); pushing a `v*` tag triggers the
+    workflow that verifies the tag matches `package.json`, builds, and
+    publishes with provenance.
+  - All GitHub Actions bumped to current majors ([#18](https://github.com/Doshi-App/typesaurus/pull/18)).
+  - Transitive-dep security bumps from Dependabot (postcss, protobufjs,
+    tar, vite, minimatch, qs, basic-ftp, rollup, picomatch, …).
+
+### Subsequent RCs — additive features
+
+Sequencing not pinned; ships when each lands cleanly.
+
+- **Vector search.** Wrap `VectorValue` and `findNearest` (web + admin).
 
 ### `11.0.0` — promotion to `latest`
 
