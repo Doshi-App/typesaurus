@@ -18,11 +18,11 @@ jobs:
     name: type-check (typescript@6, latest firebase)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .tool-versions
           cache: pnpm
@@ -43,16 +43,16 @@ jobs:
           - "^13"      # latest of v13 major
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .tool-versions
           cache: pnpm
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -89,13 +89,13 @@ jobs:
   #         - "^11"
   #         - "^12"
   #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #     - uses: actions/setup-node@v4
+  #     - uses: actions/checkout@v6
+  #     - uses: pnpm/action-setup@v6
+  #     - uses: actions/setup-node@v6
   #       with:
   #         node-version-file: .tool-versions
   #         cache: pnpm
-  #     - uses: actions/setup-java@v4
+  #     - uses: actions/setup-java@v5
   #       with:
   #         distribution: temurin
   #         java-version: "21"

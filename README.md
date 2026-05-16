@@ -2,7 +2,7 @@
 >
 > Upstream is unreleased since 2024-06-30. This fork is maintained by [Doshi](https://doshi.app) to keep the library current with the latest Firebase JS SDK and Firebase Admin SDK features. See [NOTICE.md](./NOTICE.md) for attribution, [LICENSE](./LICENSE) for the MIT license, and [CHANGELOG.md](./CHANGELOG.md) for fork-specific changes.
 >
-> Original maintainer: please reach out at <engineering@doshi.app> — happy to upstream changes.
+> Original maintainer: please reach out at <ven@doshi.app> — happy to upstream changes.
 
 ![](https://raw.githubusercontent.com/kossnocorp/typesaurus/main/promo.gif)
 
