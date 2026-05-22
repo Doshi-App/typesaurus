@@ -127,12 +127,6 @@ Versioning, scope, and ranges below are the outcome of the grilling captured in
   - Transitive-dep security bumps from Dependabot (postcss, protobufjs,
     tar, vite, minimatch, qs, basic-ftp, rollup, picomatch, …).
 
-### Subsequent RCs — additive features
-
-Sequencing not pinned; ships when each lands cleanly.
-
-- **Vector search.** Wrap `VectorValue` and `findNearest` (web + admin).
-
 ### `11.0.0` — promotion to `latest`
 
 Gating conditions:
@@ -144,6 +138,11 @@ Gating conditions:
 
 ### Deferred to v11.x or later
 
+- Vector search (`VectorValue`, `findNearest`). Originally listed as a
+  V1 feature in [ADR 0001](./docs/adr/0001-fork-rationale-and-v1-scope.md);
+  descoped during rc.3 prep because `@firebase/firestore` only exposes
+  `findNearest` via the preview Pipelines API. See
+  [ADR 0003](./docs/adr/0003-descope-vector-search-from-v11.md).
 - Firestore Pipelines wrapper (preview API, moving target).
 - Bundle loading.
 - Dev-toolchain refresh for Babel / Prettier / Sinon / Playwright /
