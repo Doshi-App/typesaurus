@@ -24,7 +24,11 @@ maintaining it against current Firebase SDKs.
   validating new code, and gives drop-in migrators an immediate target on
   the `next` dist-tag.
 - **V1 feature set (additive only):**
-  1. Vector search (`VectorValue`, `findNearest`)
+  1. ~~Vector search (`VectorValue`, `findNearest`)~~ — **descoped to
+     v11.x.** See [ADR 0003](./0003-descope-vector-search-from-v11.md).
+     `@firebase/firestore` only exposes `findNearest` via the preview
+     Pipelines API, which v11 deferred; shipping admin-only contradicted
+     the headline-feature framing.
   2. Point-in-time recovery (read-at-timestamp option on gets/queries)
   3. Multi-database support (named databases beyond `(default)`)
   4. **Transaction queries** — passing `where`-filtered queries to
@@ -68,9 +72,9 @@ maintaining it against current Firebase SDKs.
 - **`MIGRATING.md` is table stakes for v11** — must document the install
   change, the peer floor change (ADR 0002), and any small behavioral
   differences observed during the RC cycle.
-- **Vector search and PITR have a test-coverage gap** — the Firestore
-  emulator does not currently support PITR; mocked at the SDK boundary
-  in CI (see ADR 0002 § Test matrix).
+- **PITR has a test-coverage gap** — the Firestore emulator does not
+  currently support PITR; mocked at the SDK boundary in CI (see
+  ADR 0002 § Test matrix). (Vector search descoped — see ADR 0003.)
 - **We owe upstream a courtesy issue** announcing the fork and offering
   to upstream non-Doshi-specific changes. Tracked separately from this
   ADR.
