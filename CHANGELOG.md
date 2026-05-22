@@ -15,11 +15,17 @@ The entries below this line are changes made in the Doshi-maintained fork of
 [`typesaurus`](https://github.com/kossnocorp/typesaurus). Entries above are
 imported verbatim from upstream. See [NOTICE.md](./NOTICE.md).
 
-## Planned — `v11.0.0`
+## v11.0.0 - 2026-05-22
 
-Versioning, scope, and ranges below are the outcome of the grilling captured in
+First stable release of the Doshi-maintained fork. Promotes the
+`11.0.0-rc.2` artifact under the `latest` dist-tag with no source-API
+changes. Versioning, scope, and ranges below are the outcome of the
+grilling captured in
 [ADR 0001](./docs/adr/0001-fork-rationale-and-v1-scope.md) and
 [ADR 0002](./docs/adr/0002-peer-dependency-strategy.md).
+
+The sub-sections below preserve the per-RC history so consumers can see
+what shipped in each prerelease.
 
 ### `11.0.0-rc.0` — compat bump only
 
@@ -127,14 +133,11 @@ Versioning, scope, and ranges below are the outcome of the grilling captured in
   - Transitive-dep security bumps from Dependabot (postcss, protobufjs,
     tar, vite, minimatch, qs, basic-ftp, rollup, picomatch, …).
 
-### `11.0.0` — promotion to `latest`
+### `11.0.0` — promoted to `latest`
 
-Gating conditions:
-
-1. RCs have run in Doshi production for ≥ one sprint without
-   typesaurus-attributed incidents.
-2. At least one external consumer has tried an RC (announced via a
-   courtesy issue on the upstream `kossnocorp/typesaurus` repo).
+Promoted on 2026-05-22 from `11.0.0-rc.2`. No source changes between
+rc.2 and 11.0.0 — the only commit in between is the ADR 0003 descope
+of vector search (docs-only, see "Deferred to v11.x or later" below).
 
 ### Deferred to v11.x or later
 

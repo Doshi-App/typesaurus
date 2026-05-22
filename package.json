@@ -1,6 +1,6 @@
 {
   "name": "@doshi/typesaurus",
-  "version": "11.0.0-rc.2",
+  "version": "11.0.0",
   "description": "Type-safe ODM for Firestore — Doshi fork of typesaurus, maintained against current Firebase SDKs.",
   "keywords": [
     "Firebase",
