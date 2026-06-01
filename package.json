@@ -231,6 +231,6 @@
     "size-limit": "^8.0.0",
     "size-limit-preset-node-lib": "^0.1.0",
     "typescript": "^6.0.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   }
 }
